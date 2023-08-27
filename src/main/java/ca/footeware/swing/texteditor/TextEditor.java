@@ -7,7 +7,10 @@ package ca.footeware.swing.texteditor;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -20,7 +23,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.FocusManager;
 import javax.swing.ImageIcon;
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -35,7 +40,7 @@ import javax.swing.text.PlainDocument;
 
 /**
  *
- * @author craig
+ * @author http://footeware.ca
  */
 public class TextEditor extends javax.swing.JFrame {
 
@@ -47,16 +52,151 @@ public class TextEditor extends javax.swing.JFrame {
 
     /**
      * Creates new form NewJFrame
+     *
+     * @param args
      */
-    public TextEditor() {
+    public TextEditor(String[] args) {
         this.listener = new DocumentListenerImpl();
         initComponents();
-        this.jEditorPane2.requestFocus();
-        PlainDocument document = new PlainDocument();
-        document.addDocumentListener(listener);
-        this.jEditorPane2.setDocument(document);
-        this.file = null;
+        boolean loaded = handleArgs(args);
+        if (!loaded) {
+            PlainDocument document = new PlainDocument();
+            document.addDocumentListener(this.listener);
+            this.jEditorPane2.setDocument(document);
+        }
         this.jEditorPane2.setComponentPopupMenu(new Menu());
+        installKeyboardMonitor(this.jEditorPane2);
+        this.jEditorPane2.requestFocus();
+    }
+
+    /**
+     * Handle command line arguments.
+     *
+     * @param args
+     * @return boolean true if a file was loaded and displayed
+     */
+    private boolean handleArgs(String[] args) {
+        boolean loaded = false;
+        if (args.length > 1) {
+            Logger.getLogger(TextEditor.class.getName()).log(Level.INFO, "Too many args, only one is accepted. It should be a filename that may already exist.");
+        } else if (args.length == 1 && args[0] != null) {
+            Logger.getLogger(TextEditor.class.getName()).log(Level.INFO, "Found one arg: {0}", args[0]);
+            this.file = new File(args[0]);
+            if (!this.file.exists()) {
+                try {
+                    this.file.createNewFile();
+                    Logger.getLogger(TextEditor.class.getName()).log(Level.INFO, "File created.");
+                    this.setTitle(this.file.getAbsolutePath());
+                    this.jEditorPane2.requestFocus();
+                } catch (IOException e) {
+                    Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, "An error occurred creating file: " + this.file.getAbsolutePath(), e);
+                }
+            } else {
+                Logger.getLogger(TextEditor.class.getName()).log(Level.INFO, "Opening file.");
+                Path path = this.file.toPath();
+                try {
+                    String mimeType = Files.probeContentType(path);
+                    if (mimeType == null || "text/plain".equals(mimeType)) {
+                        BufferedReader input = new BufferedReader(new InputStreamReader(
+                                new FileInputStream(this.file)));
+                        this.jEditorPane2.read(input, "Reading file.");
+                        this.jEditorPane2.getDocument().addDocumentListener(listener);
+                        this.setTitle(this.file.getAbsolutePath());
+                        loaded = true;
+                    } else {
+                        Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, "File is not text/plain.");
+                    }
+                } catch (IOException e) {
+                    Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, null, e);
+                }
+            }
+        }
+        return loaded;
+    }
+
+    /**
+     * Listens for CTRL+W to close window.
+     */
+    private void installKeyboardMonitor(final JEditorPane editor) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((KeyEvent ke) -> {
+            Window window = FocusManager.getCurrentManager().getActiveWindow();
+            if (ke.getID() == KeyEvent.KEY_PRESSED) {
+                if (ke.getKeyCode() == KeyEvent.VK_W) {
+                    if (ke.isControlDown()) {
+                        if (this.changed) {
+                            int response;
+                            if (this.file != null) {
+                                response = JOptionPane.showConfirmDialog(this, "Do you want to save changes to '" + file.getName() + "' before closing?", "Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
+                            } else {
+                                response = JOptionPane.showConfirmDialog(this, "Do you want to save changes before closing?", "Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
+                            }
+
+                            switch (response) {
+                                case JOptionPane.CANCEL_OPTION -> {
+                                    return true;
+                                }
+                                case JOptionPane.YES_OPTION -> {
+                                    saveChanges();
+                                }
+                                case JOptionPane.NO_OPTION -> {
+                                    // allow window to close
+                                }
+                            }
+                        }
+                        if (window != null) {
+                            window.dispose();
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        });
+    }
+
+    private void saveChanges() {
+        if (changed) {
+            boolean overwrite = false;
+            if (this.file == null) {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+                fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
+                fileChooser.setDialogTitle("Save");
+                int userSelection = fileChooser.showSaveDialog(this);
+                if (userSelection == JFileChooser.APPROVE_OPTION) {
+                    File chosen = fileChooser.getSelectedFile();
+                    if (!chosen.exists()) {
+                        this.file = chosen;
+                    } else {
+                        int response = JOptionPane.showConfirmDialog(this, "Overwrite?", "File Exists", JOptionPane.YES_NO_OPTION);
+                        switch (response) {
+                            case JOptionPane.YES_OPTION -> {
+                                overwrite = true;
+                                break;
+                            }
+                            case JOptionPane.NO_OPTION -> {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (overwrite && this.file != null) {
+                try {
+                    FileWriter writer = new FileWriter(this.file);
+                    try (BufferedWriter bw = new BufferedWriter(writer)) {
+                        this.jEditorPane2.write(bw);
+                    }
+                    this.setTitle(this.file.getAbsolutePath());
+                    this.jEditorPane2.requestFocus();
+                    this.changed = false;
+                } catch (IOException e) {
+                    Logger.getLogger(TextEditor.class
+                            .getName()).log(Level.SEVERE, null, e);
+                    JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error Saving.", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
     }
 
     /**
@@ -85,7 +225,7 @@ public class TextEditor extends javax.swing.JFrame {
         jEditorPane2.setFont(new java.awt.Font("Ubuntu Mono", 0, 18)); // NOI18N
         jScrollPane2.setViewportView(jEditorPane2);
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons8-new-document-24.png"))); // NOI18N
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-new-document-24.png"))); // NOI18N
         jButton1.setToolTipText("New");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -93,7 +233,7 @@ public class TextEditor extends javax.swing.JFrame {
             }
         });
 
-        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons8-open-24.png"))); // NOI18N
+        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-open-24.png"))); // NOI18N
         jButton2.setToolTipText("Open");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -101,7 +241,7 @@ public class TextEditor extends javax.swing.JFrame {
             }
         });
 
-        jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons8-save-24.png"))); // NOI18N
+        jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-save-24.png"))); // NOI18N
         jButton3.setToolTipText("Save");
         jButton3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -109,7 +249,7 @@ public class TextEditor extends javax.swing.JFrame {
             }
         });
 
-        jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons8-save-as-24.png"))); // NOI18N
+        jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-save-as-24.png"))); // NOI18N
         jButton4.setToolTipText("Save As");
         jButton4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -117,7 +257,7 @@ public class TextEditor extends javax.swing.JFrame {
             }
         });
 
-        jToggleButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons8-lamp-24.png"))); // NOI18N
+        jToggleButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-lamp-24.png"))); // NOI18N
         jToggleButton1.setToolTipText("Toggle Dark Mode");
         jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -164,37 +304,12 @@ public class TextEditor extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Save.
+     * Save button pressed.
      *
      * @param evt
      */
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        if (changed) {
-            if (this.file == null) {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
-                fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
-                fileChooser.setDialogTitle("Save");
-                int userSelection = fileChooser.showSaveDialog(this);
-                if (userSelection == JFileChooser.APPROVE_OPTION) {
-                    this.file = fileChooser.getSelectedFile();
-                    this.changed = false;
-                }
-            }
-            if (this.file != null) {
-                try {
-                    FileWriter writer = new FileWriter(this.file);
-                    try (BufferedWriter bw = new BufferedWriter(writer)) {
-                        this.jEditorPane2.write(bw);
-                    }
-                    this.setTitle(this.file.getAbsolutePath());
-                    this.jEditorPane2.requestFocus();
-                    this.changed = false;
-                } catch (IOException e) {
-                    Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, null, e);
-                }
-            }
-        }
+        saveChanges();
     }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
@@ -210,17 +325,7 @@ public class TextEditor extends javax.swing.JFrame {
         int userSelection = fileChooser.showSaveDialog(this);
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             this.file = fileChooser.getSelectedFile();
-            try {
-                FileWriter writer = new FileWriter(this.file);
-                try (BufferedWriter bw = new BufferedWriter(writer)) {
-                    this.jEditorPane2.write(bw);
-                }
-                this.setTitle(this.file.getAbsolutePath());
-                this.jEditorPane2.requestFocus();
-                this.changed = false;
-            } catch (IOException e) {
-                Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, null, e);
-            }
+            saveChanges();
         }
     }//GEN-LAST:event_jButton4ActionPerformed
 
@@ -247,22 +352,32 @@ public class TextEditor extends javax.swing.JFrame {
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
             this.file = fileChooser.getSelectedFile();
-            Path path = file.toPath();
+            Path path = this.file.toPath();
             try {
-                String mimeType = Files.probeContentType(path);
+                String mimeType = null;
+                try {
+                    mimeType = Files.probeContentType(path);
+
+                } catch (IOException ex) {
+                    Logger.getLogger(TextEditor.class
+                            .getName()).log(Level.SEVERE, null, ex);
+                }
                 if (mimeType == null || "text/plain".equals(mimeType)) {
                     BufferedReader input = new BufferedReader(new InputStreamReader(
                             new FileInputStream(this.file)));
-                    this.jEditorPane2.read(input, "READING FILE :)");
+                    this.jEditorPane2.read(input, "Reading file.");
                     this.jEditorPane2.getDocument().addDocumentListener(listener);
                     this.setTitle(this.file.getAbsolutePath());
                     this.jEditorPane2.requestFocus();
                     this.changed = false;
                 } else {
+                    Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, "File is not text/plain: {0}", mimeType);
                     JOptionPane.showMessageDialog(this, "File is not 'text/plain'.");
                 }
             } catch (IOException e) {
-                Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, null, e);
+                Logger.getLogger(TextEditor.class
+                        .getName()).log(Level.SEVERE, null, e);
+                JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error", JOptionPane.OK_OPTION);
             }
         }
     }//GEN-LAST:event_jButton2ActionPerformed
@@ -273,14 +388,15 @@ public class TextEditor extends javax.swing.JFrame {
      * @param evt
      */
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        if (changed) {
+        if (this.changed) {
             int response;
-            if (file != null) {
+            if (this.file != null) {
                 response = JOptionPane.showConfirmDialog(this, "Do you want to discard unsaved changes to file '" + file.getName() + "'?", "Unsaved Changes", JOptionPane.YES_NO_OPTION);
             } else {
                 response = JOptionPane.showConfirmDialog(this, "Do you want to discard unsaved changes?", "Unsaved Changes", JOptionPane.YES_NO_OPTION);
             }
             if (response == JOptionPane.NO_OPTION) {
+                this.jEditorPane2.requestFocus();
                 return;
             }
         }
@@ -304,8 +420,10 @@ public class TextEditor extends javax.swing.JFrame {
             UIManager.setLookAndFeel(laf);
             SwingUtilities.updateComponentTreeUI(this);
             isDark = !isDark;
+
         } catch (UnsupportedLookAndFeelException e) {
-            Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(TextEditor.class
+                    .getName()).log(Level.SEVERE, null, e);
         }
     }//GEN-LAST:event_jToggleButton1ActionPerformed
 
@@ -318,17 +436,21 @@ public class TextEditor extends javax.swing.JFrame {
         FlatDarkLaf.setup();
         try {
             UIManager.setLookAndFeel(new FlatDarkLaf());
+
         } catch (UnsupportedLookAndFeelException e) {
-            Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(TextEditor.class
+                    .getName()).log(Level.SEVERE, null, e);
         }
-        java.awt.EventQueue.invokeLater(() -> {
-            TextEditor textEditor = new TextEditor();
-            textEditor.setLocationRelativeTo(null);
-            textEditor
-                    .setIconImage(new ImageIcon(TextEditor.class
-                            .getResource("/icons8-text-24.png")).getImage());
-            textEditor.setVisible(true);
-        });
+        java.awt.EventQueue.invokeLater(
+                () -> {
+                    TextEditor textEditor = new TextEditor(args);
+                    textEditor.setLocationRelativeTo(null);
+                    textEditor
+                            .setIconImage(new ImageIcon(TextEditor.class
+                                    .getResource("/images/textify.png")).getImage());
+                    textEditor.setVisible(true);
+                }
+        );
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

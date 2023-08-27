@@ -89,7 +89,7 @@
     <Component class="javax.swing.JButton" name="jButton1">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons8-new-document-24.png"/>
+          <Image iconType="3" name="/images/icons8-new-document-24.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="New"/>
       </Properties>
@@ -100,7 +100,7 @@
     <Component class="javax.swing.JButton" name="jButton2">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons8-open-24.png"/>
+          <Image iconType="3" name="/images/icons8-open-24.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="Open"/>
       </Properties>
@@ -111,7 +111,7 @@
     <Component class="javax.swing.JButton" name="jButton3">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons8-save-24.png"/>
+          <Image iconType="3" name="/images/icons8-save-24.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="Save"/>
       </Properties>
@@ -122,7 +122,7 @@
     <Component class="javax.swing.JButton" name="jButton4">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons8-save-as-24.png"/>
+          <Image iconType="3" name="/images/icons8-save-as-24.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="Save As"/>
       </Properties>
@@ -133,7 +133,7 @@
     <Component class="javax.swing.JToggleButton" name="jToggleButton1">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons8-lamp-24.png"/>
+          <Image iconType="3" name="/images/icons8-lamp-24.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="Toggle Dark Mode"/>
       </Properties>

@@ -1,14 +1,14 @@
 #! /bin/bash
 
-chmod +x files/textify
-sudo cp files/textify /usr/local/bin/
+chmod +x install-files/textify
+sudo cp install-files/textify /usr/local/bin/
 sudo chown $USER:$USER /usr/local/bin/textify
 
-chmod +x files/textify-*.jar
-sudo cp files/textify-*.jar /usr/local/bin/
+chmod +x install-files/textify-*.jar
+sudo cp install-files/textify-*.jar /usr/local/bin/
 sudo chown $USER:$USER /usr/local/bin/textify-*.jar
 
-sudo cp files/textify.svg /usr/share/icons/hicolor/scalable/apps/
+sudo cp install-files/textify.svg /usr/share/icons/hicolor/scalable/apps/
 
-cp files/textify.desktop $HOME/.local/share/applications/
+cp install-files/textify.desktop $HOME/.local/share/applications/
 

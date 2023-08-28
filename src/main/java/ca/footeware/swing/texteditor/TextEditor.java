@@ -25,7 +25,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.FocusManager;
 import javax.swing.ImageIcon;
-import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -65,7 +64,7 @@ public class TextEditor extends javax.swing.JFrame {
             this.jEditorPane2.setDocument(document);
         }
         this.jEditorPane2.setComponentPopupMenu(new Menu());
-        installKeyboardMonitor(this.jEditorPane2);
+        installKeyboardMonitor();
         this.jEditorPane2.requestFocus();
     }
 
@@ -115,14 +114,14 @@ public class TextEditor extends javax.swing.JFrame {
     }
 
     /**
-     * Listens for CTRL+W to close window.
+     * Listens for CTRL+W to close window and CTRL+s to save file.
      */
-    private void installKeyboardMonitor(final JEditorPane editor) {
+    private void installKeyboardMonitor() {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((KeyEvent ke) -> {
             Window window = FocusManager.getCurrentManager().getActiveWindow();
             if (ke.getID() == KeyEvent.KEY_PRESSED) {
-                if (ke.getKeyCode() == KeyEvent.VK_W) {
-                    if (ke.isControlDown()) {
+                if (ke.isControlDown()) {
+                    if (ke.getKeyCode() == KeyEvent.VK_W) {
                         if (this.changed) {
                             int response;
                             if (this.file != null) {
@@ -147,6 +146,8 @@ public class TextEditor extends javax.swing.JFrame {
                             window.dispose();
                         }
                         return true;
+                    } else if (ke.getKeyCode() == KeyEvent.VK_S){
+                        saveChanges();
                     }
                 }
             }
@@ -156,22 +157,23 @@ public class TextEditor extends javax.swing.JFrame {
 
     private void saveChanges() {
         if (changed) {
-            boolean overwrite = false;
+            boolean write = false;
             if (this.file == null) {
                 JFileChooser fileChooser = new JFileChooser();
                 fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
                 fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
                 fileChooser.setDialogTitle("Save");
-                int userSelection = fileChooser.showSaveDialog(this);
-                if (userSelection == JFileChooser.APPROVE_OPTION) {
+                int response = fileChooser.showSaveDialog(this);
+                if (response == JFileChooser.APPROVE_OPTION) {
                     File chosen = fileChooser.getSelectedFile();
                     if (!chosen.exists()) {
+                        write = true;
                         this.file = chosen;
                     } else {
-                        int response = JOptionPane.showConfirmDialog(this, "Overwrite?", "File Exists", JOptionPane.YES_NO_OPTION);
-                        switch (response) {
+                        int response2 = JOptionPane.showConfirmDialog(this, "Overwrite?", "File Exists", JOptionPane.YES_NO_OPTION);
+                        switch (response2) {
                             case JOptionPane.YES_OPTION -> {
-                                overwrite = true;
+                                write = true;
                                 break;
                             }
                             case JOptionPane.NO_OPTION -> {
@@ -181,7 +183,7 @@ public class TextEditor extends javax.swing.JFrame {
                     }
                 }
             }
-            if (overwrite && this.file != null) {
+            if (write && this.file != null) {
                 try {
                     FileWriter writer = new FileWriter(this.file);
                     try (BufferedWriter bw = new BufferedWriter(writer)) {
@@ -322,8 +324,8 @@ public class TextEditor extends javax.swing.JFrame {
         fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
         fileChooser.setDialogTitle("Save As");
-        int userSelection = fileChooser.showSaveDialog(this);
-        if (userSelection == JFileChooser.APPROVE_OPTION) {
+        int response = fileChooser.showSaveDialog(this);
+        if (response == JFileChooser.APPROVE_OPTION) {
             this.file = fileChooser.getSelectedFile();
             saveChanges();
         }

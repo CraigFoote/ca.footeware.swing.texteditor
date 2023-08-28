@@ -38,11 +38,25 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
+                        <id>make-assembly01</id>
+                        <phase>verify</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <id>make-assembly02</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptors>
+                                <descriptor>${basedir}/assembly.xml</descriptor>
+                            </descriptors>
+                            <finalName>textify-${project.version}</finalName>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -52,7 +66,7 @@
                 <version>3.3.1</version>
                 <executions>
                     <execution>
-                        <id>copy-resources</id>
+                        <id>copy-resources01</id>
                         <phase>validate</phase>
                         <goals>
                             <goal>copy-resources</goal>
@@ -62,7 +76,45 @@
                             <resources>          
                                 <resource>
                                     <directory>src/main/resources/external/</directory>
-                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>textify*</include>
+                                    </includes>
+                                </resource>
+                            </resources>              
+                        </configuration>            
+                    </execution>
+                    <execution>
+                        <id>copy-resources02</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/files/</outputDirectory>
+                            <resources>          
+                                <resource>
+                                    <directory>${basedir}/target/</directory>
+                                    <includes>
+                                        <include>*.jar</include>
+                                    </includes>
+                                </resource>
+                            </resources>              
+                        </configuration>            
+                    </execution>
+                    <execution>
+                        <id>copy-resources03</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/</outputDirectory>
+                            <resources>          
+                                <resource>
+                                    <directory>${basedir}/target/classes/external/</directory>
+                                    <includes>
+                                        <include>INSTALL</include>
+                                    </includes>
                                 </resource>
                             </resources>              
                         </configuration>            

@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package ca.footeware.swing.texteditor;
+package ca.footeware.swing.textify;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLaf;
@@ -42,7 +42,7 @@ import javax.swing.text.PlainDocument;
  *
  * @author http://footeware.ca
  */
-public class TextEditor extends javax.swing.JFrame {
+public class Textify extends javax.swing.JFrame {
 
     private static final long serialVersionUID = 1L;
     private File file;
@@ -55,7 +55,7 @@ public class TextEditor extends javax.swing.JFrame {
      *
      * @param args
      */
-    public TextEditor(String[] args) {
+    public Textify(String[] args) {
         this.listener = new DocumentListenerImpl();
         initComponents();
         boolean loaded = handleArgs(args);
@@ -78,21 +78,21 @@ public class TextEditor extends javax.swing.JFrame {
     private boolean handleArgs(String[] args) {
         boolean loaded = false;
         if (args.length > 1) {
-            Logger.getLogger(TextEditor.class.getName()).log(Level.INFO, "Too many args, only one is accepted. It should be a filename that may already exist.");
+            Logger.getLogger(Textify.class.getName()).log(Level.INFO, "Too many args, only one is accepted. It should be a filename that may already exist.");
         } else if (args.length == 1 && args[0] != null) {
-            Logger.getLogger(TextEditor.class.getName()).log(Level.INFO, "Found one arg: {0}", args[0]);
+            Logger.getLogger(Textify.class.getName()).log(Level.INFO, "Found one arg: {0}", args[0]);
             this.file = new File(args[0]);
             if (!this.file.exists()) {
                 try {
                     this.file.createNewFile();
-                    Logger.getLogger(TextEditor.class.getName()).log(Level.INFO, "File created.");
+                    Logger.getLogger(Textify.class.getName()).log(Level.INFO, "File created.");
                     this.setTitle(this.file.getAbsolutePath());
                     this.jEditorPane2.requestFocus();
                 } catch (IOException e) {
-                    Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, "An error occurred creating file: " + this.file.getAbsolutePath(), e);
+                    Logger.getLogger(Textify.class.getName()).log(Level.SEVERE, "An error occurred creating file: " + this.file.getAbsolutePath(), e);
                 }
             } else {
-                Logger.getLogger(TextEditor.class.getName()).log(Level.INFO, "Opening file.");
+                Logger.getLogger(Textify.class.getName()).log(Level.INFO, "Opening file.");
                 Path path = this.file.toPath();
                 try {
                     String mimeType = Files.probeContentType(path);
@@ -104,10 +104,10 @@ public class TextEditor extends javax.swing.JFrame {
                         this.setTitle(this.file.getAbsolutePath());
                         loaded = true;
                     } else {
-                        Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, "File is not text/plain.");
+                        Logger.getLogger(Textify.class.getName()).log(Level.SEVERE, "File is not text/plain.");
                     }
                 } catch (IOException e) {
-                    Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, null, e);
+                    Logger.getLogger(Textify.class.getName()).log(Level.SEVERE, null, e);
                 }
             }
         }
@@ -197,7 +197,7 @@ public class TextEditor extends javax.swing.JFrame {
                     this.jEditorPane2.requestFocus();
                     this.changed = false;
                 } catch (IOException e) {
-                    Logger.getLogger(TextEditor.class
+                    Logger.getLogger(Textify.class
                             .getName()).log(Level.SEVERE, null, e);
                     JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error Saving.", JOptionPane.ERROR_MESSAGE);
                 }
@@ -223,7 +223,7 @@ public class TextEditor extends javax.swing.JFrame {
         jToggleButton1 = new javax.swing.JToggleButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Textify");
+        setTitle("textify");
         setIconImages(null);
 
         jScrollPane2.setViewportBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
@@ -365,7 +365,7 @@ public class TextEditor extends javax.swing.JFrame {
                     mimeType = Files.probeContentType(path);
 
                 } catch (IOException ex) {
-                    Logger.getLogger(TextEditor.class
+                    Logger.getLogger(Textify.class
                             .getName()).log(Level.SEVERE, null, ex);
                 }
                 if (mimeType == null || "text/plain".equals(mimeType)) {
@@ -377,11 +377,11 @@ public class TextEditor extends javax.swing.JFrame {
                     this.jEditorPane2.requestFocus();
                     this.changed = false;
                 } else {
-                    Logger.getLogger(TextEditor.class.getName()).log(Level.SEVERE, "File is not text/plain: {0}", mimeType);
+                    Logger.getLogger(Textify.class.getName()).log(Level.SEVERE, "File is not text/plain: {0}", mimeType);
                     JOptionPane.showMessageDialog(this, "File is not 'text/plain'.");
                 }
             } catch (IOException e) {
-                Logger.getLogger(TextEditor.class
+                Logger.getLogger(Textify.class
                         .getName()).log(Level.SEVERE, null, e);
                 JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error", JOptionPane.OK_OPTION);
             }
@@ -428,7 +428,7 @@ public class TextEditor extends javax.swing.JFrame {
             isDark = !isDark;
 
         } catch (UnsupportedLookAndFeelException e) {
-            Logger.getLogger(TextEditor.class
+            Logger.getLogger(Textify.class
                     .getName()).log(Level.SEVERE, null, e);
         }
     }//GEN-LAST:event_jToggleButton1ActionPerformed
@@ -444,15 +444,14 @@ public class TextEditor extends javax.swing.JFrame {
             UIManager.setLookAndFeel(new FlatDarkLaf());
 
         } catch (UnsupportedLookAndFeelException e) {
-            Logger.getLogger(TextEditor.class
+            Logger.getLogger(Textify.class
                     .getName()).log(Level.SEVERE, null, e);
         }
-        java.awt.EventQueue.invokeLater(
-                () -> {
-                    TextEditor textEditor = new TextEditor(args);
+        java.awt.EventQueue.invokeLater(() -> {
+                    Textify textEditor = new Textify(args);
                     textEditor.setLocationRelativeTo(null);
                     textEditor
-                            .setIconImage(new ImageIcon(TextEditor.class
+                            .setIconImage(new ImageIcon(Textify.class
                                     .getResource("/images/textify.png")).getImage());
                     textEditor.setVisible(true);
                 }

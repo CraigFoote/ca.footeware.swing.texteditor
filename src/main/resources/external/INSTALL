@@ -1,14 +1,30 @@
 #! /bin/bash
 
-chmod +x install-files/textify
-sudo cp install-files/textify /usr/local/bin/
-sudo chown $USER:$USER /usr/local/bin/textify
+echo "remove old installations of the jar"
+sudo rm /usr/local/bin/textify-*.jar
 
+echo "make current release jar executable"
 chmod +x install-files/textify-*.jar
+
+echo "copy current release jar to install folder"
 sudo cp install-files/textify-*.jar /usr/local/bin/
+
+echo "make current user the owner of the jar"
 sudo chown $USER:$USER /usr/local/bin/textify-*.jar
 
+echo "make launcher executable"
+chmod +x install-files/textify
+
+echo "copy launcher to install folder"
+sudo cp install-files/textify /usr/local/bin/
+
+echo "make current user owner of launcher"
+sudo chown $USER:$USER /usr/local/bin/textify
+
+echo "copy icon to install folder"
 sudo cp install-files/textify.svg /usr/share/icons/hicolor/scalable/apps/
 
+echo "copy .desktop file to install folder"
 cp install-files/textify.desktop $HOME/.local/share/applications/
 
+echo "Done :)"

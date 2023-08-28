@@ -38,6 +38,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.PlainDocument;
 
 /**
+ * A minimal text editor.
  *
  * @author http://footeware.ca
  */
@@ -146,7 +147,7 @@ public class TextEditor extends javax.swing.JFrame {
                             window.dispose();
                         }
                         return true;
-                    } else if (ke.getKeyCode() == KeyEvent.VK_S){
+                    } else if (ke.getKeyCode() == KeyEvent.VK_S) {
                         saveChanges();
                     }
                 }
@@ -155,6 +156,9 @@ public class TextEditor extends javax.swing.JFrame {
         });
     }
 
+    /**
+     * Save file to disk.
+     */
     private void saveChanges() {
         if (changed) {
             boolean write = false;

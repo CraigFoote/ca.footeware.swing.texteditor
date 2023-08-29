@@ -6,4 +6,6 @@ Exec=/usr/local/bin/textify %f
 Icon=/usr/share/icons/hicolor/scalable/apps/textify.svg
 Terminal=false
 Type=Application
-Categories=Utility;Development;
+Categories=Utility;Development;System;Office
+StartupWMClass=textify
+MimeType=text/plain

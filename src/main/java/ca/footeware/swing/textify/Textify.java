@@ -149,6 +149,7 @@ public class Textify extends javax.swing.JFrame {
                         return true;
                     } else if (ke.getKeyCode() == KeyEvent.VK_S) {
                         saveChanges();
+                        return true;
                     }
                 }
             }
@@ -160,47 +161,49 @@ public class Textify extends javax.swing.JFrame {
      * Save file to disk.
      */
     private void saveChanges() {
-        if (changed) {
-            boolean write = false;
-            if (this.file == null) {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
-                fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
-                fileChooser.setDialogTitle("Save");
-                int response = fileChooser.showSaveDialog(this);
-                if (response == JFileChooser.APPROVE_OPTION) {
-                    File chosen = fileChooser.getSelectedFile();
-                    if (!chosen.exists()) {
-                        write = true;
-                        this.file = chosen;
-                    } else {
-                        int response2 = JOptionPane.showConfirmDialog(this, "Overwrite?", "File Exists", JOptionPane.YES_NO_OPTION);
-                        switch (response2) {
-                            case JOptionPane.YES_OPTION -> {
-                                write = true;
-                                break;
-                            }
-                            case JOptionPane.NO_OPTION -> {
-                                break;
-                            }
+        boolean write = false;
+        if (this.file != null) {
+            write = true;
+        } else {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+            fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
+            fileChooser.setDialogTitle("Save");
+            int response = fileChooser.showSaveDialog(this);
+            if (response == JFileChooser.APPROVE_OPTION) {
+                File chosen = fileChooser.getSelectedFile();
+                if (!chosen.exists()) {
+                    write = true;
+                    this.file = chosen;
+                } else {
+                    int response2 = JOptionPane.showConfirmDialog(this, "Overwrite?", "File Exists", JOptionPane.YES_NO_OPTION);
+                    switch (response2) {
+                        case JOptionPane.YES_OPTION -> {
+                            this.file = chosen;
+                            write = true;
+                            break;
+                        }
+                        case JOptionPane.NO_OPTION -> {
+                            break;
                         }
                     }
                 }
             }
-            if (write && this.file != null) {
-                try {
-                    FileWriter writer = new FileWriter(this.file);
-                    try (BufferedWriter bw = new BufferedWriter(writer)) {
-                        this.jEditorPane2.write(bw);
-                    }
-                    this.setTitle(this.file.getAbsolutePath());
-                    this.jEditorPane2.requestFocus();
-                    this.changed = false;
-                } catch (IOException e) {
-                    Logger.getLogger(Textify.class
-                            .getName()).log(Level.SEVERE, null, e);
-                    JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error Saving.", JOptionPane.ERROR_MESSAGE);
+        }
+
+        if (write && this.file != null) {
+            try {
+                FileWriter writer = new FileWriter(this.file);
+                try (BufferedWriter bw = new BufferedWriter(writer)) {
+                    this.jEditorPane2.write(bw);
                 }
+                this.setTitle(this.file.getAbsolutePath());
+                this.jEditorPane2.requestFocus();
+                this.changed = false;
+            } catch (IOException e) {
+                Logger.getLogger(Textify.class
+                        .getName()).log(Level.SEVERE, null, e);
+                JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error Saving.", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -320,7 +323,7 @@ public class Textify extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
-     * Save As.
+     * Save As button clicked.
      *
      * @param evt
      */
@@ -337,7 +340,7 @@ public class Textify extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton4ActionPerformed
 
     /**
-     * Open.
+     * Open button clicked.
      *
      * @param evt
      */
@@ -390,7 +393,7 @@ public class Textify extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
-     * New.
+     * New button clicked.
      *
      * @param evt
      */
@@ -449,13 +452,13 @@ public class Textify extends javax.swing.JFrame {
                     .getName()).log(Level.SEVERE, null, e);
         }
         java.awt.EventQueue.invokeLater(() -> {
-                    Textify textEditor = new Textify(args);
-                    textEditor.setLocationRelativeTo(null);
-                    textEditor
-                            .setIconImage(new ImageIcon(Textify.class
-                                    .getResource("/images/textify.png")).getImage());
-                    textEditor.setVisible(true);
-                }
+            Textify textEditor = new Textify(args);
+            textEditor.setLocationRelativeTo(null);
+            textEditor
+                    .setIconImage(new ImageIcon(Textify.class
+                            .getResource("/images/textify.png")).getImage());
+            textEditor.setVisible(true);
+        }
         );
     }
 

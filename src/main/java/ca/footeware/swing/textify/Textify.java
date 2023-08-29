@@ -229,6 +229,7 @@ public class Textify extends javax.swing.JFrame {
         jScrollPane2.setViewportBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
 
         jEditorPane2.setFont(new java.awt.Font("Ubuntu Mono", 0, 18)); // NOI18N
+        jEditorPane2.setName("editor"); // NOI18N
         jScrollPane2.setViewportView(jEditorPane2);
 
         jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-new-document-24.png"))); // NOI18N

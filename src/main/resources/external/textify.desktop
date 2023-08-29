@@ -2,7 +2,7 @@
 Version=1.0
 Name=textify
 Comment=A minimal text editor.
-Exec=/usr/local/bin/textify
+Exec=/usr/local/bin/textify %f
 Icon=/usr/share/icons/hicolor/scalable/apps/textify.svg
 Terminal=false
 Type=Application

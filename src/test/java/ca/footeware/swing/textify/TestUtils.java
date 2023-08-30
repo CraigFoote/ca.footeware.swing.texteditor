@@ -11,7 +11,6 @@ public class TestUtils {
 
     public static Component getChildNamed(Component parent, String name) {
 
-        // System.out.println("Class: " + parent.getClass() + " Name: " + parent.getName());
         if (name.equals(parent.getName())) {
             return parent;
         }
@@ -47,19 +46,18 @@ public class TestUtils {
 
                 Component child = getChildIndexedInternal(
                         children[i], klass, index);
+
                 if (child != null) {
                     return child;
                 }
             }
         }
-
         return null;
     }
 
     private static Component getChildIndexedInternal(
             Component parent, String klass, int index) {
 
-        // System.out.println("Class: " + parent.getClass() +" Name: " + parent.getName());
         if (parent.getClass().toString().endsWith(klass)) {
             if (counter == index) {
                 return parent;

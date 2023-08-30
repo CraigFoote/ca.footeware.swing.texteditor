@@ -168,6 +168,8 @@ public class Textify extends javax.swing.JFrame {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
             fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setFileHidingEnabled(false);
             fileChooser.setDialogTitle("Save");
             int response = fileChooser.showSaveDialog(this);
             if (response == JFileChooser.APPROVE_OPTION) {
@@ -237,6 +239,7 @@ public class Textify extends javax.swing.JFrame {
 
         jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-new-document-24.png"))); // NOI18N
         jButton1.setToolTipText("New");
+        jButton1.setName("newButton"); // NOI18N
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
@@ -253,6 +256,7 @@ public class Textify extends javax.swing.JFrame {
 
         jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-save-24.png"))); // NOI18N
         jButton3.setToolTipText("Save");
+        jButton3.setName("saveButton"); // NOI18N
         jButton3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton3ActionPerformed(evt);

@@ -1,3 +1,3 @@
 # ca.footeware.swing.textify
 
-A minimal text editor.
+A minimal text editor for Gnome.

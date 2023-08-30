@@ -363,6 +363,7 @@ public class Textify extends javax.swing.JFrame {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
+        fileChooser.setFileHidingEnabled(false);
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
             this.file = fileChooser.getSelectedFile();

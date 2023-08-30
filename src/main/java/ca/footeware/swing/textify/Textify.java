@@ -335,6 +335,7 @@ public class Textify extends javax.swing.JFrame {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
+        fileChooser.setFileHidingEnabled(false);
         fileChooser.setDialogTitle("Save As");
         int response = fileChooser.showSaveDialog(this);
         if (response == JFileChooser.APPROVE_OPTION) {

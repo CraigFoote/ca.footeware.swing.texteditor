@@ -7,6 +7,8 @@ package ca.footeware.swing.textify;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -25,6 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.FocusManager;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -45,13 +48,16 @@ import javax.swing.text.PlainDocument;
 public class Textify extends javax.swing.JFrame {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger LOGGER = Logger.getLogger(Textify.class.getName());
     private File file;
-    private boolean isDark = true;
+    private boolean dark = true;
     private boolean changed = false;
     private final DocumentListenerImpl listener;
+    private JPopupMenu hamburgerPopup;
+    private boolean hideFiles = true;
 
     /**
-     * Creates new form NewJFrame
+     * Creates new {@link Textify}.
      *
      * @param args
      */
@@ -62,11 +68,39 @@ public class Textify extends javax.swing.JFrame {
         if (!loaded) {
             PlainDocument document = new PlainDocument();
             document.addDocumentListener(this.listener);
-            this.jEditorPane2.setDocument(document);
+            this.jEditorPane.setDocument(document);
         }
-        this.jEditorPane2.setComponentPopupMenu(new Menu());
+        this.setIconImage(new ImageIcon(Textify.class
+                .getResource("/images/textify.png")).getImage());
+        this.jEditorPane.setComponentPopupMenu(getCutCopyPastePopupMenu());
         installKeyboardMonitor();
-        this.jEditorPane2.requestFocus();
+        this.setLocationRelativeTo(null);
+        this.jEditorPane.requestFocus();
+    }
+
+    /**
+     * Gets a popup menu with cut, copy and paste actions.
+     *
+     * @return {@link JPopupMenu}
+     */
+    private JPopupMenu getCutCopyPastePopupMenu() {
+        JPopupMenu menu = new JPopupMenu();
+        JMenuItem item = new JMenuItem("Cut");
+        item.addActionListener((ActionEvent e) -> {
+            jEditorPane.cut();
+        });
+        menu.add(item);
+        item = new JMenuItem("Copy");
+        item.addActionListener((ActionEvent e) -> {
+            jEditorPane.copy();
+        });
+        menu.add(item);
+        item = new JMenuItem("Paste");
+        item.addActionListener((ActionEvent e) -> {
+            jEditorPane.paste();
+        });
+        menu.add(item);
+        return menu;
     }
 
     /**
@@ -80,34 +114,34 @@ public class Textify extends javax.swing.JFrame {
         if (args.length > 1) {
             Logger.getLogger(Textify.class.getName()).log(Level.INFO, "Too many args, only one is accepted. It should be a filename that may already exist.");
         } else if (args.length == 1 && args[0] != null) {
-            Logger.getLogger(Textify.class.getName()).log(Level.INFO, "Found one arg: {0}", args[0]);
+            LOGGER.log(Level.INFO, "Found one arg: {0}", args[0]);
             this.file = new File(args[0]);
             if (!this.file.exists()) {
                 try {
                     this.file.createNewFile();
-                    Logger.getLogger(Textify.class.getName()).log(Level.INFO, "File created.");
+                    LOGGER.log(Level.INFO, "File created.");
                     this.setTitle(this.file.getAbsolutePath());
-                    this.jEditorPane2.requestFocus();
+                    this.jEditorPane.requestFocus();
                 } catch (IOException e) {
-                    Logger.getLogger(Textify.class.getName()).log(Level.SEVERE, "An error occurred creating file: " + this.file.getAbsolutePath(), e);
+                    LOGGER.log(Level.SEVERE, "An error occurred creating file: " + this.file.getAbsolutePath(), e);
                 }
             } else {
-                Logger.getLogger(Textify.class.getName()).log(Level.INFO, "Opening file.");
+                LOGGER.log(Level.INFO, "Opening file.");
                 Path path = this.file.toPath();
                 try {
                     String mimeType = Files.probeContentType(path);
                     if (mimeType == null || "text/plain".equals(mimeType)) {
                         BufferedReader input = new BufferedReader(new InputStreamReader(
                                 new FileInputStream(this.file)));
-                        this.jEditorPane2.read(input, "Reading file.");
-                        this.jEditorPane2.getDocument().addDocumentListener(listener);
+                        this.jEditorPane.read(input, "Reading file.");
+                        this.jEditorPane.getDocument().addDocumentListener(listener);
                         this.setTitle(this.file.getAbsolutePath());
                         loaded = true;
                     } else {
-                        Logger.getLogger(Textify.class.getName()).log(Level.SEVERE, "File is not text/plain.");
+                        LOGGER.log(Level.SEVERE, "File is not text/plain.");
                     }
                 } catch (IOException e) {
-                    Logger.getLogger(Textify.class.getName()).log(Level.SEVERE, null, e);
+                    LOGGER.log(Level.SEVERE, null, e);
                 }
             }
         }
@@ -158,31 +192,49 @@ public class Textify extends javax.swing.JFrame {
     }
 
     /**
+     * Get a standardized {@link JFileChooser} with provided title.
+     *
+     * @param title {@link String}
+     * @return {@link JFileChooser}
+     */
+    private JFileChooser getFileChooser(String title) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setMultiSelectionEnabled(false);
+        fileChooser.setPreferredSize(new Dimension(this.getWidth(), this.getHeight()));
+        fileChooser.setFileHidingEnabled(!hideFiles);
+        fileChooser.setDialogTitle(title);
+        return fileChooser;
+    }
+
+    /**
      * Save file to disk.
      */
     private void saveChanges() {
         boolean write = false;
         if (this.file != null) {
+            LOGGER.log(Level.INFO, "file=" + file.getName());
             write = true;
         } else {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
-            fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fileChooser.setFileHidingEnabled(false);
-            fileChooser.setDialogTitle("Save");
+            JFileChooser fileChooser = getFileChooser("Save");
             int response = fileChooser.showSaveDialog(this);
             if (response == JFileChooser.APPROVE_OPTION) {
+                LOGGER.log(Level.INFO, "saving " + file.getName());
                 File chosen = fileChooser.getSelectedFile();
+                LOGGER.log(Level.INFO, "chosen=" + chosen);
                 if (!chosen.exists()) {
                     write = true;
                     this.file = chosen;
                 } else {
+                    LOGGER.log(Level.INFO, "chosen exists");
                     int response2 = JOptionPane.showConfirmDialog(this, "Overwrite?", "File Exists", JOptionPane.YES_NO_OPTION);
                     switch (response2) {
                         case JOptionPane.YES_OPTION -> {
                             this.file = chosen;
                             write = true;
+                            LOGGER.log(Level.INFO, "overwriting " + file.getName());
                             break;
                         }
                         case JOptionPane.NO_OPTION -> {
@@ -193,19 +245,25 @@ public class Textify extends javax.swing.JFrame {
             }
         }
 
+        LOGGER.log(Level.INFO, "write=" + write);
+        LOGGER.log(Level.INFO, "this.file=" + file);
         if (write && this.file != null) {
             try {
+                if (!this.file.exists()) {
+                    LOGGER.log(Level.INFO, "creating file " + file.getName());
+                    this.file.createNewFile();
+                }
                 FileWriter writer = new FileWriter(this.file);
                 try (BufferedWriter bw = new BufferedWriter(writer)) {
-                    this.jEditorPane2.write(bw);
+                    this.jEditorPane.write(bw);
+                    LOGGER.log(Level.INFO, file.getName() + " written");
                 }
                 this.setTitle(this.file.getAbsolutePath());
-                this.jEditorPane2.requestFocus();
+                this.jEditorPane.requestFocus();
                 this.changed = false;
             } catch (IOException e) {
-                Logger.getLogger(Textify.class
-                        .getName()).log(Level.SEVERE, null, e);
-                JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error Saving.", JOptionPane.ERROR_MESSAGE);
+                LOGGER.log(Level.SEVERE, null, e);
+                JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error Saving", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -219,23 +277,23 @@ public class Textify extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jEditorPane2 = new javax.swing.JEditorPane();
+        jScrollPane = new javax.swing.JScrollPane();
+        jEditorPane = new javax.swing.JEditorPane();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
-        jToggleButton1 = new javax.swing.JToggleButton();
+        jButton5 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("textify");
         setIconImages(null);
 
-        jScrollPane2.setViewportBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
+        jScrollPane.setViewportBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
 
-        jEditorPane2.setFont(new java.awt.Font("Ubuntu Mono", 0, 18)); // NOI18N
-        jEditorPane2.setName("editor"); // NOI18N
-        jScrollPane2.setViewportView(jEditorPane2);
+        jEditorPane.setFont(new java.awt.Font("Ubuntu Mono", 0, 18)); // NOI18N
+        jEditorPane.setName("editor"); // NOI18N
+        jScrollPane.setViewportView(jEditorPane);
 
         jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-new-document-24.png"))); // NOI18N
         jButton1.setToolTipText("New");
@@ -248,6 +306,7 @@ public class Textify extends javax.swing.JFrame {
 
         jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-open-24.png"))); // NOI18N
         jButton2.setToolTipText("Open");
+        jButton2.setName("openButton"); // NOI18N
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton2ActionPerformed(evt);
@@ -265,17 +324,19 @@ public class Textify extends javax.swing.JFrame {
 
         jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-save-as-24.png"))); // NOI18N
         jButton4.setToolTipText("Save As");
+        jButton4.setName("saveAsButton"); // NOI18N
         jButton4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton4ActionPerformed(evt);
             }
         });
 
-        jToggleButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-lamp-24.png"))); // NOI18N
-        jToggleButton1.setToolTipText("Toggle Dark Mode");
-        jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
+        jButton5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-hamburger-menu-24.png"))); // NOI18N
+        jButton5.setToolTipText("Save As");
+        jButton5.setName("hamburgerButton"); // NOI18N
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jToggleButton1ActionPerformed(evt);
+                jButton5ActionPerformed(evt);
             }
         });
 
@@ -285,19 +346,17 @@ public class Textify extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 715, Short.MAX_VALUE)
-                        .addComponent(jToggleButton1)))
+                .addComponent(jButton1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 715, Short.MAX_VALUE)
+                .addComponent(jButton5)
                 .addContainerGap())
+            .addComponent(jScrollPane)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -308,10 +367,10 @@ public class Textify extends javax.swing.JFrame {
                     .addComponent(jButton1)
                     .addComponent(jButton2)
                     .addComponent(jButton3)
-                    .addComponent(jToggleButton1))
+                    .addComponent(jButton5))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 556, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 541, Short.MAX_VALUE)
+                .addGap(21, 21, 21))
         );
 
         pack();
@@ -332,11 +391,7 @@ public class Textify extends javax.swing.JFrame {
      * @param evt
      */
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
-        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
-        fileChooser.setFileHidingEnabled(false);
-        fileChooser.setDialogTitle("Save As");
+        JFileChooser fileChooser = getFileChooser("Save As");
         int response = fileChooser.showSaveDialog(this);
         if (response == JFileChooser.APPROVE_OPTION) {
             this.file = fileChooser.getSelectedFile();
@@ -361,10 +416,7 @@ public class Textify extends javax.swing.JFrame {
                 return;
             }
         }
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
-        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Text Document", "txt"));
-        fileChooser.setFileHidingEnabled(false);
+        JFileChooser fileChooser = getFileChooser("Open");
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
             this.file = fileChooser.getSelectedFile();
@@ -381,18 +433,17 @@ public class Textify extends javax.swing.JFrame {
                 if (mimeType == null || "text/plain".equals(mimeType)) {
                     BufferedReader input = new BufferedReader(new InputStreamReader(
                             new FileInputStream(this.file)));
-                    this.jEditorPane2.read(input, "Reading file.");
-                    this.jEditorPane2.getDocument().addDocumentListener(listener);
+                    this.jEditorPane.read(input, "Reading file.");
+                    this.jEditorPane.getDocument().addDocumentListener(listener);
                     this.setTitle(this.file.getAbsolutePath());
-                    this.jEditorPane2.requestFocus();
+                    this.jEditorPane.requestFocus();
                     this.changed = false;
                 } else {
-                    Logger.getLogger(Textify.class.getName()).log(Level.SEVERE, "File is not text/plain: {0}", mimeType);
+                    LOGGER.log(Level.SEVERE, "File is not text/plain: {0}", mimeType);
                     JOptionPane.showMessageDialog(this, "File is not 'text/plain'.");
                 }
             } catch (IOException e) {
-                Logger.getLogger(Textify.class
-                        .getName()).log(Level.SEVERE, null, e);
+                LOGGER.log(Level.SEVERE, null, e);
                 JOptionPane.showMessageDialog(this, e.getLocalizedMessage(), "Error", JOptionPane.OK_OPTION);
             }
         }
@@ -412,36 +463,45 @@ public class Textify extends javax.swing.JFrame {
                 response = JOptionPane.showConfirmDialog(this, "Do you want to discard unsaved changes?", "Unsaved Changes", JOptionPane.YES_NO_OPTION);
             }
             if (response == JOptionPane.NO_OPTION) {
-                this.jEditorPane2.requestFocus();
+                this.jEditorPane.requestFocus();
                 return;
             }
         }
         PlainDocument document = new PlainDocument();
-        this.jEditorPane2.setDocument(document);
+        this.jEditorPane.setDocument(document);
         document.addDocumentListener(listener);
         this.file = null;
         this.setTitle("Textify");
-        this.jEditorPane2.requestFocus();
+        this.jEditorPane.requestFocus();
         this.changed = false;
     }//GEN-LAST:event_jButton1ActionPerformed
 
-    /**
-     * Toggle light/dark mode.
-     *
-     * @param evt
-     */
-    private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
-        FlatLaf laf = isDark ? new FlatLightLaf() : new FlatDarkLaf();
-        try {
-            UIManager.setLookAndFeel(laf);
-            SwingUtilities.updateComponentTreeUI(this);
-            isDark = !isDark;
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        this.hamburgerPopup = new JPopupMenu();
+        JCheckBox darkModeCheckBox = new JCheckBox("Dark Mode", dark);
+        darkModeCheckBox.setMargin(new Insets(10, 10, 10, 10));
+        darkModeCheckBox.addItemListener((evt2) -> {
+            FlatLaf laf = dark ? new FlatLightLaf() : new FlatDarkLaf();
+            try {
+                UIManager.setLookAndFeel(laf);
+                SwingUtilities.updateComponentTreeUI(this);
+                dark = !dark;
 
-        } catch (UnsupportedLookAndFeelException e) {
-            Logger.getLogger(Textify.class
-                    .getName()).log(Level.SEVERE, null, e);
-        }
-    }//GEN-LAST:event_jToggleButton1ActionPerformed
+            } catch (UnsupportedLookAndFeelException ex) {
+                Logger.getLogger(Textify.class
+                        .getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        this.hamburgerPopup.add(darkModeCheckBox);
+
+        JCheckBox showHiddenFilesCheckBox = new JCheckBox("Show Hidden Files in File Chooser", hideFiles);
+        showHiddenFilesCheckBox.setMargin(new Insets(10, 10, 10, 10));
+        showHiddenFilesCheckBox.addItemListener((evt3) -> {
+            this.hideFiles = !this.hideFiles;
+        });
+        this.hamburgerPopup.add(showHiddenFilesCheckBox);
+        this.hamburgerPopup.show(this.jButton5, 0, this.jButton5.getHeight());
+    }//GEN-LAST:event_jButton5ActionPerformed
 
     /**
      * Main.
@@ -452,20 +512,13 @@ public class Textify extends javax.swing.JFrame {
         FlatDarkLaf.setup();
         try {
             UIManager.setLookAndFeel(new FlatDarkLaf());
-
         } catch (UnsupportedLookAndFeelException e) {
-            Logger.getLogger(Textify.class
-                    .getName()).log(Level.SEVERE, null, e);
+            LOGGER.log(Level.SEVERE, null, e);
         }
         java.awt.EventQueue.invokeLater(() -> {
-            Textify textEditor = new Textify(args);
-            textEditor.setLocationRelativeTo(null);
-            textEditor
-                    .setIconImage(new ImageIcon(Textify.class
-                            .getResource("/images/textify.png")).getImage());
-            textEditor.setVisible(true);
-        }
-        );
+            Textify textify = new Textify(args);
+            textify.setVisible(true);
+        });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -473,9 +526,9 @@ public class Textify extends javax.swing.JFrame {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
-    private javax.swing.JEditorPane jEditorPane2;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JToggleButton jToggleButton1;
+    private javax.swing.JButton jButton5;
+    private javax.swing.JEditorPane jEditorPane;
+    private javax.swing.JScrollPane jScrollPane;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -502,32 +555,6 @@ public class Textify extends javax.swing.JFrame {
         @Override
         public void changedUpdate(DocumentEvent e) {
             changed = true;
-        }
-    }
-
-    /**
-     * A popup menu handling cut, copy and paste.
-     */
-    private class Menu extends JPopupMenu implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        public Menu() {
-            JMenuItem item = new JMenuItem("Cut");
-            item.addActionListener((ActionEvent e) -> {
-                jEditorPane2.cut();
-            });
-            add(item);
-            item = new JMenuItem("Copy");
-            item.addActionListener((ActionEvent e) -> {
-                jEditorPane2.copy();
-            });
-            add(item);
-            item = new JMenuItem("Paste");
-            item.addActionListener((ActionEvent e) -> {
-                jEditorPane2.paste();
-            });
-            add(item);
         }
     }
 }

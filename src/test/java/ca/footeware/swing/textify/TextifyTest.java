@@ -25,9 +25,12 @@ import org.junit.jupiter.api.Test;
  */
 public class TextifyTest {
 
+    private static final String TEST_PATH = "/home/" + 
+            System.getProperty("user.name") + "/test";
+
     @AfterEach
     public void afterEach() {
-        File file = new File("test");
+        File file = new File(TEST_PATH);
         if (file.exists()) {
             file.delete();
             file = null;
@@ -44,7 +47,7 @@ public class TextifyTest {
 
     @Test
     public void testEditorPaneOpensWithNonexistantFileArg() {
-        Textify textify = new Textify(new String[]{"test"});
+        Textify textify = new Textify(new String[]{TEST_PATH});
         JEditorPane editor = (JEditorPane) TestUtils.getChildNamed(textify, "editor");
         assertNotNull(editor);
         assertEquals(0, editor.getText().length());
@@ -53,10 +56,10 @@ public class TextifyTest {
     @Test
     public void testEditorPaneOpensWithExistingFileArg() throws IOException {
         // create file
-        File file = new File("test");
+        File file = new File(TEST_PATH);
         file.createNewFile();
         // open text.txt in testify
-        Textify textify = new Textify(new String[]{"test"});
+        Textify textify = new Textify(new String[]{TEST_PATH});
         JEditorPane editor = (JEditorPane) TestUtils.getChildNamed(textify, "editor");
         assertNotNull(editor);
         // confirm file is empty
@@ -69,7 +72,7 @@ public class TextifyTest {
         saveButton.doClick();
         textify.dispose();
         // reopen textify with test.txt
-        textify = new Textify(new String[]{"test"});
+        textify = new Textify(new String[]{TEST_PATH});
         editor = (JEditorPane) TestUtils.getChildNamed(textify, "editor");
         assertNotNull(editor);
         // confirm test.txt now has content
@@ -78,7 +81,7 @@ public class TextifyTest {
 
     @Test
     public void testNewButtonWhenEmpty() {
-        Textify textify = new Textify(new String[]{"test"});
+        Textify textify = new Textify(new String[]{TEST_PATH});
         JEditorPane editor = (JEditorPane) TestUtils.getChildNamed(textify, "editor");
         assertNotNull(editor);
         assertEquals(0, editor.getText().length());
@@ -96,7 +99,7 @@ public class TextifyTest {
     @Test
     public void testNewButtonWhenNotEmptyDoNotOverwrite() throws InterruptedException, InvocationTargetException {
         // open new file
-        Textify textify = new Textify(new String[]{"test"});
+        Textify textify = new Textify(new String[]{TEST_PATH});
         JEditorPane editor = (JEditorPane) TestUtils.getChildNamed(
                 textify, "editor");
         assertNotNull(editor);
@@ -108,49 +111,38 @@ public class TextifyTest {
                 textify, "newButton");
         assertNotNull(newButton);
 
-        SwingUtilities.invokeLater(() -> {
-            newButton.doClick();
-            System.out.println("New button clicked");
+        SwingUtilities.invokeLater(() -> newButton.doClick());
+        // wait for dialog
+        JButton noButton = null;
+        int tries = 0;
+        // the dialog box will show up shortly
+        while (noButton == null && tries < 10) {
+            Thread.sleep(200);
+            // looking for No button to not overwrite
+            noButton = (JButton) TestUtils.getChildIndexed(
+                    textify, "JButton", 1);
+            tries++;
+        }
+        assertNotNull(noButton);
+        // click dialog's No button to save content
+        noButton.doClick();
 
-            // wait for dialog
-            JButton noButton = null;
-            int tries = 0;
-            // the dialog box will show up shortly
-            while (noButton == null && tries < 20) {
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(TextifyTest.class.getName()).log(
-                            Level.SEVERE, null, ex);
-                }
-                // use index to find OK button of dialog
-                System.out.println("looking for No button to not overwrite");
-                noButton = (JButton) TestUtils.getChildIndexed(
-                        textify, "JButton", 1);
-                System.out.println("noButton=" + noButton);
-                tries++;
+        String content = null;
+        tries = 0;
+        while (content == null && tries < 20) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(TextifyTest.class.getName()).log(
+                        Level.SEVERE, null, ex);
             }
-            assertNotNull(noButton);
-            // click dialog's No button to save content
-            noButton.doClick();
-
-            String content = null;
-            tries = 0;
-            while (content == null && tries < 20) {
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(TextifyTest.class.getName()).log(
-                            Level.SEVERE, null, ex);
-                }
-                String text = editor.getText();
-                if (text != null && !text.isEmpty()) {
-                    content = text;
-                }
-                tries++;
+            String text = editor.getText();
+            if (text != null && !text.isEmpty()) {
+                content = text;
             }
-            assertEquals("", content);
-        });
+            tries++;
+        }
+        assertEquals("testtest", content);
     }
 
     /**
@@ -160,7 +152,7 @@ public class TextifyTest {
     @Test
     public void testNewButtonWhenNotEmptyOverwrite() throws InterruptedException, InvocationTargetException {
         // open new file
-        Textify textify = new Textify(new String[]{"test"});
+        Textify textify = new Textify(new String[]{TEST_PATH});
         JEditorPane editor = (JEditorPane) TestUtils.getChildNamed(
                 textify, "editor");
         assertNotNull(editor);
@@ -172,189 +164,187 @@ public class TextifyTest {
                 textify, "newButton");
         assertNotNull(newButton);
 
-        SwingUtilities.invokeLater(() -> {
-            newButton.doClick();
-            System.out.println("New button clicked");
+        SwingUtilities.invokeLater(() -> newButton.doClick());
 
-            // wait for dialog
-            JButton yesButton = null;
-            int tries = 0;
-            // the dialog box will show up shortly
-            while (yesButton == null && tries < 20) {
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(TextifyTest.class.getName()).log(
-                            Level.SEVERE, null, ex);
-                }
-                // use index to find OK button of dialog
-                System.out.println("looking for Yes button to overwrite");
-                yesButton = (JButton) TestUtils.getChildIndexed(
-                        textify, "JButton", 0);
-                System.out.println("noButton=" + yesButton);
-                tries++;
+        // wait for dialog
+        JButton yesButton = null;
+        int tries = 0;
+        // the dialog box will show up shortly
+        while (yesButton == null && tries < 20) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(TextifyTest.class.getName()).log(
+                        Level.SEVERE, null, ex);
             }
-            assertNotNull(yesButton);
-            // click dialog's Yes button to overwrite content displaying empty editor
-            yesButton.doClick();
+            // use index to find OK button of dialog
+            yesButton = (JButton) TestUtils.getChildIndexed(
+                    textify, "JButton", 0);
+            tries++;
+        }
+        assertNotNull(yesButton);
+        // click dialog's Yes button to overwrite content displaying empty editor
+        yesButton.doClick();
 
-            String content = null;
-            tries = 0;
-            while (content == null && tries < 20) {
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(TextifyTest.class.getName()).log(
-                            Level.SEVERE, null, ex);
-                }
-                String text = editor.getText();
-                if (text != null) {
-                    content = text;
-                }
-                tries++;
+        String content = null;
+        tries = 0;
+        while (content == null && tries < 20) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(TextifyTest.class.getName()).log(
+                        Level.SEVERE, null, ex);
             }
-            assertEquals("testtest", content);
-        });
+            String text = editor.getText();
+            if (text != null) {
+                content = text;
+            }
+            tries++;
+        }
+        assertEquals("", content);
     }
 
     @Test
     public void testSaveButton() throws InterruptedException {
         // open empty
-        final Textify textify = new Textify(new String[]{});
+        Textify textify = new Textify(new String[]{});
+        // add content to editor
+        JEditorPane editor = (JEditorPane) TestUtils.getChildNamed(textify, "editor");
+        assertNotNull(editor);
+        editor.setText("testtest");
+        // get and click Save button
+        JButton saveButton = (JButton) TestUtils.getChildNamed(textify, "saveButton");
+        assertNotNull(saveButton);
+
+        // click on Save async
+        SwingUtilities.invokeLater(() -> saveButton.doClick());
+
+        // the dialog box will show up shortly, get the filechooser when ready
+        JFileChooser chooser = null;
+        int tries = 0;
+        while (chooser == null || tries < 20) {
+            Thread.sleep(200);
+            // use index to find filechooser of dialog
+            if (chooser == null) {
+                chooser = (JFileChooser) TestUtils.getChildIndexed(
+                        textify, "JFileChooser", 0);
+            }
+            tries++;
+        }
+        assertNotNull(chooser);
+        chooser.setSelectedFile(new File(TEST_PATH));
+
+        JButton saveDialogButton = null;
+        tries = 0;
+        while (saveDialogButton == null || tries < 20) {
+            Thread.sleep(200);
+            // use index to find save button of dialog
+            if (saveDialogButton == null) {
+                saveDialogButton = (JButton) TestUtils.getChildIndexed(
+                        textify, "JButton", 3);
+            }
+            tries++;
+        }
+
+        assertNotNull(saveDialogButton);
+        final JButton finalSaveDialogButton = saveDialogButton;
+        SwingUtilities.invokeLater(() -> finalSaveDialogButton.doClick());
+
+        // confirm editor still has content
+        assertNotNull(editor);
+        assertEquals(8, editor.getText().length());
+        // close and reopen file
+        textify.dispose();
+        textify = null;
+        // restart textify
+        textify = new Textify(new String[]{TEST_PATH});
+        // confirm new editor has the content
+        editor = (JEditorPane) TestUtils.getChildNamed(textify, "editor");
+        assertNotNull(editor);
+        String content = null;
+        tries = 0;
+        while (content == null || tries < 20) {
+            String text = editor.getText();
+            if (text != null && !text.isEmpty()) {
+                content = text;
+            }
+            tries++;
+        }
+        assertEquals("testtest", content);
+    }
+
+    @Test
+    public void testSaveAsButton() throws InterruptedException {
+        // open empty
+        Textify textify = new Textify(new String[]{});
         // add content
         JEditorPane editor = (JEditorPane) TestUtils.getChildNamed(textify, "editor");
         assertNotNull(editor);
         // put in content
         editor.setText("testtest");
         // get and click save button
-        JButton saveButton = (JButton) TestUtils.getChildNamed(textify, "saveButton");
-        assertNotNull(saveButton);
+        JButton saveAsButton = (JButton) TestUtils.getChildNamed(textify, "saveAsButton");
+        assertNotNull(saveAsButton);
+        SwingUtilities.invokeLater(() -> saveAsButton.doClick());
+        // the dialog box will show up shortly
+        int tries = 0;
+        JFileChooser chooser = null;
+        JButton saveDialogButton = null;
+        while ((chooser == null || saveDialogButton == null) && tries < 20) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(TextifyTest.class.getName()).log(
+                        Level.SEVERE, null, ex);
+            }
+            // use index to find save button of dialog
+            if (chooser == null) {
+                chooser = (JFileChooser) TestUtils.getChildIndexed(
+                        textify, "JFileChooser", 0);
+            }
+            if (saveDialogButton == null) {
+                saveDialogButton = (JButton) TestUtils.getChildIndexed(
+                        textify, "JButton", 3);
+            }
+            tries++;
 
-        SwingUtilities.invokeLater(() -> {
-            saveButton.doClick();
-            // the dialog box will show up shortly
-            int tries = 0;
-            JFileChooser chooser = null;
-            JButton saveDialogButton = null;
-            while ((chooser == null || saveDialogButton == null) && tries < 20) {
+            assertNotNull(chooser);
+            chooser.setSelectedFile(new File(TEST_PATH));
+            assertNotNull(saveDialogButton);
+            saveDialogButton.doClick();
+            // confirm editor still has content
+            JEditorPane editor2 = (JEditorPane) TestUtils.getChildNamed(
+                    textify, "editor");
+            assertNotNull(editor2);
+            assertEquals(8, editor.getText().length());
+            // close and reopen file
+            textify.dispose();
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(TextifyTest.class.getName()).log(
+                        Level.SEVERE, null, ex);
+            }
+            textify = new Textify(new String[]{TEST_PATH});
+            // confirm editor still has content
+            editor = (JEditorPane) TestUtils.getChildNamed(
+                    textify, "editor");
+            assertNotNull(editor);
+            String content = null;
+            tries = 0;
+            while (content == null && tries < 20) {
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(TextifyTest.class.getName()).log(
                             Level.SEVERE, null, ex);
                 }
-                // use index to find save button of dialog
-                if (chooser == null) {
-                    chooser = (JFileChooser) TestUtils.getChildIndexed(
-                            textify, "JFileChooser", 0);
-                }
-                if (saveDialogButton == null) {
-                    saveDialogButton = (JButton) TestUtils.getChildIndexed(
-                            textify, "JButton", 3);
-                }
-                tries++;
-            }
-            assertNotNull(chooser);
-            chooser.setSelectedFile(new File("test"));
-            assertNotNull(saveDialogButton);
-            saveDialogButton.doClick();
-            // confirm editor still has content
-            assertNotNull(editor);
-            assertEquals(8, editor.getText().length());
-            // close and reopen file
-            textify.dispose();
-            Textify textify2 = new Textify(new String[]{"test"});
-            // confirm editor has content
-            JEditorPane editor2 = (JEditorPane) TestUtils.getChildNamed(textify2, "editor");
-            assertNotNull(editor2);
-            String content = null;
-            tries = 0;
-            while (content == null && tries < 20) {
-                String text = editor2.getText();
-                if (!text.isEmpty()) {
-                    content = text;
+                if (content == null || content.isEmpty()) {
+                    content = editor.getText();
                 }
                 tries++;
             }
             assertEquals("testtest", content);
-        });
-    }
-
-    @Test
-    public void testSaveAsButton() throws InterruptedException {
-        // open empty
-        final Textify textify = new Textify(new String[]{});
-        // add content
-        final JEditorPane editor = (JEditorPane) TestUtils.getChildNamed(textify, "editor");
-        assertNotNull(editor);
-        // put in content
-        editor.setText("testtest");
-        // get and click save button
-        JButton saveButton = (JButton) TestUtils.getChildNamed(textify, "saveAsButton");
-        assertNotNull(saveButton);
-
-        SwingUtilities.invokeLater(() -> {
-            saveButton.doClick();
-            // the dialog box will show up shortly
-            int tries = 0;
-            JFileChooser chooser = null;
-            JButton saveDialogButton = null;
-            while ((chooser == null || saveDialogButton == null) && tries < 20) {
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(TextifyTest.class.getName()).log(
-                            Level.SEVERE, null, ex);
-                }
-                // use index to find save button of dialog
-                if (chooser == null) {
-                    chooser = (JFileChooser) TestUtils.getChildIndexed(
-                            textify, "JFileChooser", 0);
-                }
-                if (saveDialogButton == null) {
-                    saveDialogButton = (JButton) TestUtils.getChildIndexed(
-                            textify, "JButton", 3);
-                }
-                tries++;
-
-                assertNotNull(chooser);
-                chooser.setSelectedFile(new File("test"));
-                assertNotNull(saveDialogButton);
-                saveDialogButton.doClick();
-                // confirm editor still has content
-                JEditorPane editor2 = (JEditorPane) TestUtils.getChildNamed(
-                        textify, "editor");
-                assertNotNull(editor2);
-                assertEquals(8, editor.getText().length());
-                // close and reopen file
-                textify.dispose();
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(TextifyTest.class.getName()).log(
-                            Level.SEVERE, null, ex);
-                }
-                Textify textify2 = new Textify(new String[]{"test"});
-                // confirm editor still has content
-                JEditorPane editor3 = (JEditorPane) TestUtils.getChildNamed(
-                        textify2, "editor");
-                assertNotNull(editor3);
-                String content = null;
-                tries = 0;
-                while (content == null && tries < 20) {
-                    try {
-                        Thread.sleep(200);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(TextifyTest.class.getName()).log(
-                                Level.SEVERE, null, ex);
-                    }
-                    if (content == null || content.isEmpty()) {
-                        content = editor3.getText();
-                    }
-                    tries++;
-                }
-                assertEquals("testtest", content);
-            }
-        });
+        }
     }
 }

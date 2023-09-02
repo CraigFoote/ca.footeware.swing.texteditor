@@ -91,7 +91,7 @@ public class Textify extends javax.swing.JFrame {
         this.editor.setComponentPopupMenu(getCutCopyPastePopupMenu());
         installKeyboardMonitor();
         this.setLocationRelativeTo(null);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(getWindowListener());
         this.setVisible(true);
         this.editor.requestFocus();
@@ -111,24 +111,31 @@ public class Textify extends javax.swing.JFrame {
                     int response;
                     if (file != null) {
                         response = JOptionPane.showConfirmDialog(Textify.this,
-                                "Do you want to discard unsaved changes to file '"
-                                + file.getName() + "'?", "Unsaved Changes",
-                                JOptionPane.YES_NO_OPTION);
+                                "Do you want to save changes to '" + file.getName() + "' before closing?", 
+                                "Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
                     } else {
                         response = JOptionPane.showConfirmDialog(Textify.this,
-                                "Do you want to discard unsaved changes?",
-                                "Unsaved Changes", JOptionPane.YES_NO_OPTION);
+                                "Do you want to save changes before closing?",
+                                "Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
                     }
-                    if (response == JOptionPane.NO_OPTION) {
-                        saveChanges();
-                    } else if (response == JOptionPane.YES_OPTION) {
-                        return;
+                    switch (response) {
+                        case JOptionPane.CANCEL_OPTION -> {
+                            return;
+                        }
+                        case JOptionPane.YES_OPTION -> {
+                            saveChanges();
+                        }
+                        case JOptionPane.NO_OPTION -> {
+                            System.exit(0);
+                        }
                     }
+                } else {
+                    System.exit(0);
                 }
             }
         };
-    }            
-    
+    }
+
     /**
      * Gets a popup menu with cut, copy and paste actions.
      *
@@ -192,7 +199,7 @@ public class Textify extends javax.swing.JFrame {
                         this.setTitle(this.file.getAbsolutePath());
                         loaded = true;
                     } else {
-                        LOGGER.log(Level.SEVERE, "File is not text/plain.");
+                        LOGGER.log(Level.SEVERE, "File is not 'text/plain'.");
                     }
                 } catch (IOException e) {
                     LOGGER.log(Level.SEVERE, null, e);
@@ -215,8 +222,9 @@ public class Textify extends javax.swing.JFrame {
                             int response;
                             if (this.file != null) {
                                 response = JOptionPane.showConfirmDialog(this,
-                                        "Do you want to save changes to '" + file.getName() + "' before closing?",
-                                        "Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
+                                        "Do you want to save changes to '" + file.getName() + 
+                                                "' before closing", "Unsaved Changes", 
+                                                JOptionPane.YES_NO_CANCEL_OPTION);
                             } else {
                                 response = JOptionPane.showConfirmDialog(this,
                                         "Do you want to save changes before closing?",
@@ -303,7 +311,6 @@ public class Textify extends javax.swing.JFrame {
                 }
             }
         }
-
         LOGGER.log(Level.INFO, "write={0}", write);
         LOGGER.log(Level.INFO, "this.file={0}", file);
         if (write && this.file != null) {
@@ -591,7 +598,7 @@ public class Textify extends javax.swing.JFrame {
                     JLabel msgLabel = new JLabel("Another fine mess by Footeware.ca");
                     msgLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-                    MouseListener listener = new MouseAdapter() {
+                    MouseListener mouseListener = new MouseAdapter() {
                         @Override
                         public void mouseClicked(MouseEvent e) {
                             try {
@@ -601,8 +608,8 @@ public class Textify extends javax.swing.JFrame {
                             }
                         }
                     };
-                    imgLabel.addMouseListener(listener);
-                    msgLabel.addMouseListener(listener);
+                    imgLabel.addMouseListener(mouseListener);
+                    msgLabel.addMouseListener(mouseListener);
 
                     JPanel panel = new JPanel();
                     panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
@@ -615,9 +622,7 @@ public class Textify extends javax.swing.JFrame {
                             "About", JOptionPane.PLAIN_MESSAGE);
                 });
         hamburgerPopup.add(aboutMenuItem);
-
         hamburgerPopup.show(this.hamburger, 0, this.hamburger.getHeight());
-
     }//GEN-LAST:event_hamburgerActionPerformed
 
     /**

@@ -20,6 +20,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -40,6 +43,7 @@ import javax.swing.FocusManager;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -87,10 +91,44 @@ public class Textify extends javax.swing.JFrame {
         this.editor.setComponentPopupMenu(getCutCopyPastePopupMenu());
         installKeyboardMonitor();
         this.setLocationRelativeTo(null);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.addWindowListener(getWindowListener());
         this.setVisible(true);
         this.editor.requestFocus();
     }
 
+    /**
+     * Listens for window closing and prompts user to save if changes to editor
+     * text.
+     *
+     * @return {@link WindowListener}
+     */
+    private WindowListener getWindowListener() {
+        return new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (changed) {
+                    int response;
+                    if (file != null) {
+                        response = JOptionPane.showConfirmDialog(Textify.this,
+                                "Do you want to discard unsaved changes to file '"
+                                + file.getName() + "'?", "Unsaved Changes",
+                                JOptionPane.YES_NO_OPTION);
+                    } else {
+                        response = JOptionPane.showConfirmDialog(Textify.this,
+                                "Do you want to discard unsaved changes?",
+                                "Unsaved Changes", JOptionPane.YES_NO_OPTION);
+                    }
+                    if (response == JOptionPane.NO_OPTION) {
+                        saveChanges();
+                    } else if (response == JOptionPane.YES_OPTION) {
+                        return;
+                    }
+                }
+            }
+        };
+    }            
+    
     /**
      * Gets a popup menu with cut, copy and paste actions.
      *
@@ -125,8 +163,9 @@ public class Textify extends javax.swing.JFrame {
     private boolean handleArgs(String[] args) {
         boolean loaded = false;
         if (args.length > 1) {
-            Logger.getLogger(Textify.class.getName()).log(Level.INFO,
-                    "Too many args, only one is accepted. It should be a filename that may already exist.");
+            Logger.getLogger(Textify.class
+                    .getName()).log(Level.INFO,
+                            "Too many args, only one is accepted. It should be a filename that may already exist.");
         } else if (args.length == 1 && args[0] != null) {
             LOGGER.log(Level.INFO, "Found one arg: {0}", args[0]);
             this.file = new File(args[0]);
@@ -429,10 +468,13 @@ public class Textify extends javax.swing.JFrame {
             int response;
             if (file != null) {
                 response = JOptionPane.showConfirmDialog(this,
-                        "Do you want to discard unsaved changes to file '" + file.getName() + "'?", "Unsaved Changes", JOptionPane.YES_NO_OPTION);
+                        "Do you want to discard unsaved changes to file '?"
+                        + file.getName() + "'?", "Unsaved Changes",
+                        JOptionPane.YES_NO_OPTION);
             } else {
                 response = JOptionPane.showConfirmDialog(this,
-                        "Do you want to discard unsaved changes?", "Unsaved Changes", JOptionPane.YES_NO_OPTION);
+                        "Do you want to discard unsaved changes?",
+                        "Unsaved Changes", JOptionPane.YES_NO_OPTION);
             }
             if (response == JOptionPane.NO_OPTION) {
                 return;
@@ -538,38 +580,40 @@ public class Textify extends javax.swing.JFrame {
         // about dialog
         JMenuItem aboutMenuItem = new JMenuItem("About");
         aboutMenuItem.setMargin(new Insets(10, 10, 10, 10));
-        aboutMenuItem.addActionListener((ActionEvent e) -> {
-            // clickable image and text
-            ImageIcon icon = new ImageIcon(Textify.class.getResource("/images/programmer.jpg"));
-            JLabel imgLabel = new JLabel(icon);
-            imgLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        aboutMenuItem
+                .addActionListener((ActionEvent e) -> {
+                    // clickable image and text
+                    ImageIcon icon = new ImageIcon(Textify.class
+                            .getResource("/images/programmer.jpg"));
+                    JLabel imgLabel = new JLabel(icon);
+                    imgLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-            JLabel msgLabel = new JLabel("Another fine mess by Footeware.ca");
-            msgLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    JLabel msgLabel = new JLabel("Another fine mess by Footeware.ca");
+                    msgLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-            MouseListener listener = new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    try {
-                        Desktop.getDesktop().browse(new URI("http://Footeware.ca"));
-                    } catch (URISyntaxException | IOException ex) {
-                        LOGGER.log(Level.SEVERE, null, ex);
-                    }
-                }
-            };
-            imgLabel.addMouseListener(listener);
-            msgLabel.addMouseListener(listener);
+                    MouseListener listener = new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            try {
+                                Desktop.getDesktop().browse(new URI("http://Footeware.ca"));
+                            } catch (URISyntaxException | IOException ex) {
+                                LOGGER.log(Level.SEVERE, null, ex);
+                            }
+                        }
+                    };
+                    imgLabel.addMouseListener(listener);
+                    msgLabel.addMouseListener(listener);
 
-            JPanel panel = new JPanel();
-            panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-            imgLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            msgLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            panel.add(imgLabel, BorderLayout.NORTH);
-            panel.add(Box.createRigidArea(new Dimension(0, 20)));
-            panel.add(msgLabel, BorderLayout.SOUTH);
-            JOptionPane.showMessageDialog(Textify.this, panel,
-                    "About", JOptionPane.PLAIN_MESSAGE);
-        });
+                    JPanel panel = new JPanel();
+                    panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+                    imgLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    msgLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    panel.add(imgLabel, BorderLayout.NORTH);
+                    panel.add(Box.createRigidArea(new Dimension(0, 20)));
+                    panel.add(msgLabel, BorderLayout.SOUTH);
+                    JOptionPane.showMessageDialog(Textify.this, panel,
+                            "About", JOptionPane.PLAIN_MESSAGE);
+                });
         hamburgerPopup.add(aboutMenuItem);
 
         hamburgerPopup.show(this.hamburger, 0, this.hamburger.getHeight());
@@ -589,8 +633,7 @@ public class Textify extends javax.swing.JFrame {
             LOGGER.log(Level.SEVERE, null, e);
         }
         java.awt.EventQueue.invokeLater(() -> {
-            Textify textify = new Textify(args);
-//            textify.setVisible(true);
+            new Textify(args);
         });
     }
 

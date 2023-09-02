@@ -4,8 +4,8 @@
  */
 package ca.footeware.swing.textify;
 
+import java.awt.event.WindowEvent;
 import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -25,8 +25,8 @@ import org.junit.jupiter.api.Test;
  */
 public class TextifyTest {
 
-    private static final String TEST_PATH = "/home/" + 
-            System.getProperty("user.name") + "/test";
+    private static final String TEST_PATH = "/home/"
+            + System.getProperty("user.name") + "/test";
 
     @AfterEach
     public void afterEach() {
@@ -222,7 +222,7 @@ public class TextifyTest {
         // the dialog box will show up shortly, get the filechooser when ready
         JFileChooser chooser = null;
         int tries = 0;
-        while (chooser == null || tries < 20) {
+        while (chooser == null && tries < 20) {
             Thread.sleep(200);
             // use index to find filechooser of dialog
             if (chooser == null) {
@@ -236,7 +236,7 @@ public class TextifyTest {
 
         JButton saveDialogButton = null;
         tries = 0;
-        while (saveDialogButton == null || tries < 20) {
+        while (saveDialogButton == null && tries < 20) {
             Thread.sleep(200);
             // use index to find save button of dialog
             if (saveDialogButton == null) {
@@ -263,7 +263,7 @@ public class TextifyTest {
         assertNotNull(editor);
         String content = null;
         tries = 0;
-        while (content == null || tries < 20) {
+        while (content == null && tries < 20) {
             String text = editor.getText();
             if (text != null && !text.isEmpty()) {
                 content = text;
@@ -346,5 +346,27 @@ public class TextifyTest {
             }
             assertEquals("testtest", content);
         }
+    }
+
+    @Test
+    public void testCloseWhileChanges() throws InterruptedException {
+        // open empty
+        Textify textify = new Textify(new String[]{});
+        // add content
+        JEditorPane editor = (JEditorPane) TestUtils.getChildNamed(textify, "editor");
+        assertNotNull(editor);
+        editor.setText("testtest");
+        // close window to get prompted to discard
+        SwingUtilities.invokeLater(() -> textify.dispatchEvent(
+                new WindowEvent(textify, WindowEvent.WINDOW_CLOSING)));
+        // get Yes button to discard changes
+        JButton yesButton = null;
+        int tries = 0;
+        while (yesButton == null && tries < 20) {
+            Thread.sleep(200);
+            yesButton = (JButton) TestUtils.getChildIndexed(textify, "JButton", 1);
+            tries++;
+        }
+        assertNotNull(yesButton);
     }
 }

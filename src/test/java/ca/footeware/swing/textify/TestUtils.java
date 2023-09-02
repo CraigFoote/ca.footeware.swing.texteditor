@@ -60,7 +60,7 @@ public class TestUtils {
             for (int i = 0; i < children.length; ++i) {
                 Component child = getChildIndexedInternal(children[i], klass, index);
                 if (child != null) {
-//                    System.out.println("child=" + child.getClass().toString());
+                    // System.out.println("child=" + child.getClass().toString());
                     return child;
                 }
             }

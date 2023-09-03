@@ -93,7 +93,6 @@ public class Textify extends javax.swing.JFrame {
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(getWindowListener());
-        this.setVisible(true);
         this.editor.requestFocus();
     }
 
@@ -111,7 +110,7 @@ public class Textify extends javax.swing.JFrame {
                     int response;
                     if (file != null) {
                         response = JOptionPane.showConfirmDialog(Textify.this,
-                                "Do you want to save changes to '" + file.getName() + "' before closing?", 
+                                "Do you want to save changes to '" + file.getName() + "' before closing?",
                                 "Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
                     } else {
                         response = JOptionPane.showConfirmDialog(Textify.this,
@@ -222,9 +221,9 @@ public class Textify extends javax.swing.JFrame {
                             int response;
                             if (this.file != null) {
                                 response = JOptionPane.showConfirmDialog(this,
-                                        "Do you want to save changes to '" + file.getName() + 
-                                                "' before closing", "Unsaved Changes", 
-                                                JOptionPane.YES_NO_CANCEL_OPTION);
+                                        "Do you want to save changes to '" + file.getName()
+                                        + "' before closing", "Unsaved Changes",
+                                        JOptionPane.YES_NO_CANCEL_OPTION);
                             } else {
                                 response = JOptionPane.showConfirmDialog(this,
                                         "Do you want to save changes before closing?",
@@ -559,22 +558,6 @@ public class Textify extends javax.swing.JFrame {
         JPopupMenu hamburgerPopup = new JPopupMenu();
         hamburgerPopup.setName("hamburgerPopup");
 
-        // dark mode
-        JCheckBox darkModeCheckBox = new JCheckBox("Dark Mode", dark);
-        darkModeCheckBox.setMargin(new Insets(10, 10, 10, 10));
-        darkModeCheckBox.addItemListener((evt2) -> {
-            FlatLaf laf = dark ? new FlatLightLaf() : new FlatDarkLaf();
-            try {
-                UIManager.setLookAndFeel(laf);
-                SwingUtilities.updateComponentTreeUI(this);
-                dark = !dark;
-
-            } catch (UnsupportedLookAndFeelException ex) {
-                LOGGER.log(Level.SEVERE, null, ex);
-            }
-        });
-        hamburgerPopup.add(darkModeCheckBox);
-
         // show hidden files in file chooser
         JCheckBox showHiddenFilesCheckBox = new JCheckBox("Show Hidden Files in File Chooser",
                 hideFiles);
@@ -582,7 +565,6 @@ public class Textify extends javax.swing.JFrame {
         showHiddenFilesCheckBox.addItemListener((evt3) -> {
             this.hideFiles = !this.hideFiles;
         });
-        hamburgerPopup.add(showHiddenFilesCheckBox);
 
         // about dialog
         JMenuItem aboutMenuItem = new JMenuItem("About");
@@ -621,7 +603,31 @@ public class Textify extends javax.swing.JFrame {
                     JOptionPane.showMessageDialog(Textify.this, panel,
                             "About", JOptionPane.PLAIN_MESSAGE);
                 });
+
+        // dark mode - declare last because it uses the other items
+        JCheckBox darkModeCheckBox = new JCheckBox("Dark Mode", dark);
+        darkModeCheckBox.setMargin(new Insets(10, 10, 10, 10));
+        darkModeCheckBox.addItemListener((evt2) -> {
+            FlatLaf laf = dark ? new FlatLightLaf() : new FlatDarkLaf();
+            try {
+                UIManager.setLookAndFeel(laf);
+                SwingUtilities.updateComponentTreeUI(this);
+                hamburgerPopup.updateUI();
+                darkModeCheckBox.updateUI();
+                showHiddenFilesCheckBox.updateUI();
+                aboutMenuItem.updateUI();
+                dark = !dark;
+
+            } catch (UnsupportedLookAndFeelException ex) {
+                LOGGER.log(Level.SEVERE, null, ex);
+            }
+        });
+
+        hamburgerPopup.add(darkModeCheckBox);
+        hamburgerPopup.add(showHiddenFilesCheckBox);
+        hamburgerPopup.addSeparator();
         hamburgerPopup.add(aboutMenuItem);
+
         hamburgerPopup.show(this.hamburger, 0, this.hamburger.getHeight());
     }//GEN-LAST:event_hamburgerActionPerformed
 
@@ -638,7 +644,8 @@ public class Textify extends javax.swing.JFrame {
             LOGGER.log(Level.SEVERE, null, e);
         }
         java.awt.EventQueue.invokeLater(() -> {
-            new Textify(args);
+            Textify textify = new Textify(args);
+            textify.setVisible(true);
         });
     }
 

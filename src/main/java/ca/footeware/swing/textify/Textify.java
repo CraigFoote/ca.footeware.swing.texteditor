@@ -190,7 +190,7 @@ public class Textify extends javax.swing.JFrame {
                 Path path = this.file.toPath();
                 try {
                     String mimeType = Files.probeContentType(path);
-                    if (mimeType == null || "text/plain".equals(mimeType)) {
+                    if (isText(mimeType)) {
                         BufferedReader input = new BufferedReader(new InputStreamReader(
                                 new FileInputStream(this.file)));
                         this.editor.read(input, "Reading file.");
@@ -198,7 +198,7 @@ public class Textify extends javax.swing.JFrame {
                         this.setTitle(this.file.getAbsolutePath());
                         loaded = true;
                     } else {
-                        LOGGER.log(Level.SEVERE, "File is not 'text/plain'.");
+                        LOGGER.log(Level.SEVERE, "File is not text.");
                     }
                 } catch (IOException e) {
                     LOGGER.log(Level.SEVERE, null, e);
@@ -206,6 +206,14 @@ public class Textify extends javax.swing.JFrame {
             }
         }
         return loaded;
+    }
+    
+    private boolean isText(String mimeType){
+        return mimeType == null 
+                || mimeType.startsWith("text") 
+                || mimeType.contains("xml") 
+                || mimeType.contains("json")
+                || mimeType.contains("x-sh");
     }
 
     /**
@@ -357,7 +365,7 @@ public class Textify extends javax.swing.JFrame {
 
         scroller.setViewportBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
 
-        editor.setFont(new java.awt.Font("Ubuntu Mono", 0, 18)); // NOI18N
+        editor.setFont(new java.awt.Font("Ubuntu Mono", 0, 24)); // NOI18N
         editor.setName("editor"); // NOI18N
         scroller.setViewportView(editor);
 
@@ -498,7 +506,7 @@ public class Textify extends javax.swing.JFrame {
                 } catch (IOException ex) {
                     LOGGER.log(Level.SEVERE, null, ex);
                 }
-                if (mimeType == null || "text/plain".equals(mimeType)) {
+                if (isText(mimeType)) {
                     BufferedReader input = new BufferedReader(new InputStreamReader(
                             new FileInputStream(this.file)));
                     this.editor.read(input, "Reading file.");
@@ -507,8 +515,8 @@ public class Textify extends javax.swing.JFrame {
                     this.editor.requestFocus();
                     this.changed = false;
                 } else {
-                    LOGGER.log(Level.SEVERE, "File is not text/plain: {0}", mimeType);
-                    JOptionPane.showMessageDialog(this, "File is not 'text/plain'.");
+                    LOGGER.log(Level.SEVERE, "File is not text: {0}", mimeType);
+                    JOptionPane.showMessageDialog(this, "File is not text.");
                 }
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, null, e);

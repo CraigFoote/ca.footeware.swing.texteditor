@@ -75,7 +75,7 @@
         <Component class="javax.swing.JEditorPane" name="editor">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Ubuntu Mono" size="18" style="0"/>
+              <Font name="Ubuntu Mono" size="24" style="0"/>
             </Property>
             <Property name="name" type="java.lang.String" value="editor" noResource="true"/>
           </Properties>

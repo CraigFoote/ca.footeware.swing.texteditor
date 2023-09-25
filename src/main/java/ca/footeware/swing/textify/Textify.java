@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Level;
@@ -191,6 +192,11 @@ public class Textify extends javax.swing.JFrame {
                 try {
                     String mimeType = Files.probeContentType(path);
                     if (isText(mimeType)) {
+                        Charset cs = Charset.defaultCharset();
+                        if (!cs.equals(Charset.forName("UTF-8"))) {
+                            throw new IllegalArgumentException("File is not UTF-8: " + cs);
+                        }
+
                         BufferedReader input = new BufferedReader(new InputStreamReader(
                                 new FileInputStream(this.file)));
                         this.editor.read(input, "Reading file.");
@@ -198,21 +204,30 @@ public class Textify extends javax.swing.JFrame {
                         this.setTitle(this.file.getAbsolutePath());
                         loaded = true;
                     } else {
-                        LOGGER.log(Level.SEVERE, "File is not text.");
+                        throw new IllegalArgumentException("File is not text: " + mimeType);
                     }
-                } catch (IOException e) {
-                    LOGGER.log(Level.SEVERE, null, e);
+                } catch (IOException | IllegalArgumentException e) {
+                    LOGGER.log(Level.SEVERE, "Error opening file.", e);
+                    JOptionPane.showMessageDialog(this, e.getLocalizedMessage(),
+                            "Error opening file.", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
         return loaded;
     }
-    
-    private boolean isText(String mimeType){
-        return mimeType == null 
-                || mimeType.startsWith("text") 
-                || mimeType.contains("xml") 
+
+    /**
+     * Determines if provided mimeType is text-based.
+     *
+     * @param mimeType {@link String}
+     * @return boolean true if mimeType indicates text-based
+     */
+    private boolean isText(String mimeType) {
+        return mimeType == null
+                || mimeType.startsWith("text")
+                || mimeType.contains("xml")
                 || mimeType.contains("json")
+                || mimeType.equals("audio/mpegurl")
                 || mimeType.contains("x-sh");
     }
 
@@ -500,13 +515,13 @@ public class Textify extends javax.swing.JFrame {
             this.file = fileChooser.getSelectedFile();
             Path path = this.file.toPath();
             try {
-                String mimeType = null;
-                try {
-                    mimeType = Files.probeContentType(path);
-                } catch (IOException ex) {
-                    LOGGER.log(Level.SEVERE, null, ex);
-                }
+                String mimeType = Files.probeContentType(path);
                 if (isText(mimeType)) {
+                    Charset cs = Charset.defaultCharset();
+                    if (!cs.equals(Charset.forName("UTF-8"))) {
+                        throw new IllegalArgumentException("File is not UTF-8: " + cs);
+                    }
+
                     BufferedReader input = new BufferedReader(new InputStreamReader(
                             new FileInputStream(this.file)));
                     this.editor.read(input, "Reading file.");
@@ -515,13 +530,12 @@ public class Textify extends javax.swing.JFrame {
                     this.editor.requestFocus();
                     this.changed = false;
                 } else {
-                    LOGGER.log(Level.SEVERE, "File is not text: {0}", mimeType);
-                    JOptionPane.showMessageDialog(this, "File is not text.");
+                    throw new IllegalArgumentException("File is not text: " + mimeType);
                 }
-            } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, null, e);
+            } catch (IOException | IllegalArgumentException e) {
+                LOGGER.log(Level.SEVERE, "Error opeing file.", e);
                 JOptionPane.showMessageDialog(this, e.getLocalizedMessage(),
-                        "Error", JOptionPane.OK_OPTION);
+                        "Error opening file", JOptionPane.OK_OPTION);
             }
         }
     }//GEN-LAST:event_openButtonActionPerformed
